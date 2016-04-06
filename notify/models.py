@@ -9,6 +9,7 @@ from django.utils.html import escape
 from django.utils.timesince import timesince
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import force_text
+from django.utils.functional import cached_property
 
 from .utils import prefetch_relations
 
@@ -186,8 +187,8 @@ class Notification(models.Model):
         max_length=50, blank=True, null=True,
         verbose_name=_('Anonymous text for actor'))
 
-    actor_url_text = models.URLField(
-        blank=True, null=True,
+    actor_url_text = models.CharField(
+        blank=True, null=True, max_length=200,
         verbose_name=_('Anonymous URL for actor'))
 
     # basic details.
@@ -220,8 +221,8 @@ class Notification(models.Model):
         max_length=50, blank=True, null=True,
         verbose_name=_('Anonymous text for target'))
 
-    target_url_text = models.URLField(
-        blank=True, null=True,
+    target_url_text = models.CharField(
+        blank=True, null=True, max_length=200,
         verbose_name=_('Anonymous URL for target'))
 
     # obj attributes.
@@ -240,8 +241,8 @@ class Notification(models.Model):
         max_length=50, blank=True, null=True,
         verbose_name=_('Anonymous text for action object'))
 
-    obj_url_text = models.URLField(
-        blank=True, null=True,
+    obj_url_text = models.CharField(
+        blank=True, null=True, max_length=200,
         verbose_name=_('Anonymous URL for action object'))
 
     extra = JSONField(null=True, blank=True,
@@ -275,7 +276,8 @@ class Notification(models.Model):
             elif not ctx['obj']:
                 return _("{actor} {verb} on {target} {at} ago").format(**ctx)
             elif ctx['obj']:
-                return _("{actor} {verb} {obj} on {target} {at} ago").format(**ctx)
+                return _(
+                    "{actor} {verb} {obj} on {target} {at} ago").format(**ctx)
         return _("{description} -- {at} ago").format(**ctx)
 
     def mark_as_read(self):
@@ -292,7 +294,7 @@ class Notification(models.Model):
         self.read = False
         self.save()
 
-    @property
+    @cached_property
     def actor(self):
         """
         Property to return actor object/text to keep things DRY.
@@ -301,7 +303,7 @@ class Notification(models.Model):
         """
         return self.actor_content_object or self.actor_text
 
-    @property
+    @cached_property
     def actor_url(self):
         """
         Property to return permalink of the actor.
@@ -318,7 +320,7 @@ class Notification(models.Model):
             url = self.actor_url_text or "#"
         return url
 
-    @property
+    @cached_property
     def target(self):
         """
         See ``actor`` property
@@ -327,7 +329,7 @@ class Notification(models.Model):
         """
         return self.target_content_object or self.target_text
 
-    @property
+    @cached_property
     def target_url(self):
         """
         See ``actor_url`` property.
@@ -340,7 +342,7 @@ class Notification(models.Model):
             url = self.target_url_text or "#"
         return url
 
-    @property
+    @cached_property
     def obj(self):
         """
         See ``actor`` property.
@@ -349,7 +351,7 @@ class Notification(models.Model):
         """
         return self.obj_content_object or self.obj_text
 
-    @property
+    @cached_property
     def obj_url(self):
         """
         See ``actor_url`` property.
